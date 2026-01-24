@@ -61,7 +61,7 @@ jobs:
           commit: ${{ steps.get-sha.outputs.sha }}
           name: ci-binaries-${{ steps.get-sha.outputs.sha }}
           path: dist/
-          github_token: ${{ secrets.WORKFLOW_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Download Windows artifacts
         uses: dawidd6/action-download-artifact@v6
@@ -70,7 +70,7 @@ jobs:
           commit: ${{ steps.get-sha.outputs.sha }}
           name: ci-binaries-windows-${{ steps.get-sha.outputs.sha }}
           path: dist/
-          github_token: ${{ secrets.WORKFLOW_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload combined artifacts
         uses: actions/upload-artifact@v4
