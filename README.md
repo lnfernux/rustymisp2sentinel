@@ -129,9 +129,9 @@ Output as follows:
 | `MISP_API_KEY` | Yes | MISP API key |
 | `MISP_VERIFY_TLS` | No | Verify SSL certificates (default: true, set to false for self-signed) |
 | `SENTINEL_WORKSPACE_ID` | Yes | Sentinel workspace ID |
-| `AZURE_TENANT_ID` | No | Required without managed identity |
-| `AZURE_CLIENT_ID` | No | Required without managed identity |
-| `AZURE_CLIENT_SECRET` | No | Required without managed identity |
+| `AZURE_TENANT_ID` | Yes | The Azure Tenant ID |
+| `AZURE_CLIENT_ID` | Yes | Application ID of the app registration |
+| `AZURE_CLIENT_SECRET` | Yes | Application secret of the app registration |
 
 ### MISP Filters
 
