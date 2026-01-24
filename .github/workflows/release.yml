@@ -44,7 +44,7 @@ jobs:
           echo "Last successful CI run ID: $RUN_ID"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_TOKEN }}
       
       - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
