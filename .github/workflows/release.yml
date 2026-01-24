@@ -23,61 +23,37 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       
-      - name: Get commit SHA for artifacts
-        id: get-sha
+      - name: Get last successful CI run ID
+        id: get-run-id
         run: |
-          # For tag-based releases, get the commit before the version bump
-          # For manual releases, use the current commit
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            # Get the commit that the tag points to
-            TAG_COMMIT=$(git rev-list -n 1 "${{ github.ref }}")
-            echo "Tag points to commit: $TAG_COMMIT"
-            
-            # Check if this is a version bump commit
-            COMMIT_MSG=$(git log -1 --pretty=%B "$TAG_COMMIT")
-            if echo "$COMMIT_MSG" | grep -q "chore: bump version"; then
-              # Get the parent commit (the one CI ran on)
-              ARTIFACT_SHA=$(git rev-parse "${TAG_COMMIT}^")
-              echo "Using parent commit for artifacts: $ARTIFACT_SHA"
-            else
-              # Use the tag commit itself
-              ARTIFACT_SHA="$TAG_COMMIT"
-              echo "Using tag commit for artifacts: $ARTIFACT_SHA"
-            fi
-          else
-            # For manual workflow_dispatch, use current SHA
-            ARTIFACT_SHA="${{ github.sha }}"
-            echo "Using current SHA for manual release: $ARTIFACT_SHA"
+          # Query GitHub API for last successful ci.yml workflow run on main branch
+          RUN_ID=$(gh run list \
+            --workflow=ci.yml \
+            --branch=main \
+            --status=success \
+            --limit=1 \
+            --json=databaseId \
+            --jq='.[0].databaseId')
+          
+          if [[ -z "$RUN_ID" ]]; then
+            echo "Error: No successful CI runs found"
+            exit 1
           fi
-          echo "sha=$ARTIFACT_SHA" >> "$GITHUB_OUTPUT"
+          
+          echo "Last successful CI run ID: $RUN_ID"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Download Linux artifacts
+      - name: Download artifacts
         uses: dawidd6/action-download-artifact@v6
         with:
           workflow: ci.yml
-          commit: ${{ steps.get-sha.outputs.sha }}
-          name: ci-binaries-${{ steps.get-sha.outputs.sha }}
+          run_id: ${{ steps.get-run-id.outputs.run_id }}
           path: dist/
           github_token: ${{ secrets.WORKFLOW_TOKEN }}
       
-      - name: Download Windows artifacts
-        uses: dawidd6/action-download-artifact@v6
-        with:
-          workflow: ci.yml
-          commit: ${{ steps.get-sha.outputs.sha }}
-          name: ci-binaries-windows-${{ steps.get-sha.outputs.sha }}
-          path: dist/
-          github_token: ${{ secrets.WORKFLOW_TOKEN }}
-      
-      - name: Upload combined artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-binaries
-          path: dist/
-
   release: 
     name: Create Release
     needs: [download-artifacts]
