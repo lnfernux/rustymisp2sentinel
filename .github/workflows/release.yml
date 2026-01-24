@@ -54,6 +54,15 @@ jobs:
           path: dist/
           github_token: ${{ secrets.WORKFLOW_TOKEN }}
       
+      - name: Flatten artifact directories
+        run: |
+          # Move all binaries from nested directories to dist root
+          find dist/ -type f -name "misp2sentinel-cli-*" -o -name "handler-*" | while read file; do
+            mv "$file" "dist/$(basename "$file")"
+          done
+          # Clean up empty nested directories
+          find dist/ -maxdepth 2 -type d -empty -delete
+      
       - name: Upload combined artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -79,7 +88,6 @@ jobs:
           tag_name: ${{ inputs.version || github.ref_name }}
           generate_release_notes: true
           files: |
-            dist/handler-linux-x64-static
             dist/misp2sentinel-cli-linux-x64-static
             dist/misp2sentinel-cli-linux-x64
             dist/misp2sentinel-cli-windows-x64.exe
