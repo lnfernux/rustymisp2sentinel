@@ -54,6 +54,12 @@ jobs:
           path: dist/
           github_token: ${{ secrets.WORKFLOW_TOKEN }}
       
+      - name: Upload combined artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-binaries
+          path: dist/
+      
   release: 
     name: Create Release
     needs: [download-artifacts]
