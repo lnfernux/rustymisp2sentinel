@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions: 
+  contents: write
+
+jobs:
+  download-artifacts:
+    name: Download CI Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Get commit SHA for artifacts
+        id: get-sha
+        run: |
+          # For tag-based releases, get the commit before the version bump
+          # For manual releases, use the current commit
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # Get the commit that the tag points to
+            TAG_COMMIT=$(git rev-list -n 1 "${{ github.ref }}")
+            echo "Tag points to commit: $TAG_COMMIT"
+            
+            # Check if this is a version bump commit
+            COMMIT_MSG=$(git log -1 --pretty=%B "$TAG_COMMIT")
+            if echo "$COMMIT_MSG" | grep -q "chore: bump version"; then
+              # Get the parent commit (the one CI ran on)
+              ARTIFACT_SHA=$(git rev-parse "${TAG_COMMIT}^")
+              echo "Using parent commit for artifacts: $ARTIFACT_SHA"
+            else
+              # Use the tag commit itself
+              ARTIFACT_SHA="$TAG_COMMIT"
+              echo "Using tag commit for artifacts: $ARTIFACT_SHA"
+            fi
+          else
+            # For manual workflow_dispatch, use current SHA
+            ARTIFACT_SHA="${{ github.sha }}"
+            echo "Using current SHA for manual release: $ARTIFACT_SHA"
+          fi
+          echo "sha=$ARTIFACT_SHA" >> "$GITHUB_OUTPUT"
+      
+      - name: Download Linux artifacts
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: ci.yml
+          commit: ${{ steps.get-sha.outputs.sha }}
+          name: ci-binaries-${{ steps.get-sha.outputs.sha }}
+          path: dist/
+          github_token: ${{ secrets.WORKFLOW_TOKEN }}
+      
+      - name: Download Windows artifacts
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          workflow: ci.yml
+          commit: ${{ steps.get-sha.outputs.sha }}
+          name: ci-binaries-windows-${{ steps.get-sha.outputs.sha }}
+          path: dist/
+          github_token: ${{ secrets.WORKFLOW_TOKEN }}
+      
+      - name: Upload combined artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-binaries
+          path: dist/
+
+  release: 
+    name: Create Release
+    needs: [download-artifacts]
+    runs-on:  ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v4
+      
+      - name: Download artifacts
+        uses:  actions/download-artifact@v4
+        with:
+          name:  release-binaries
+          path:  dist/
+      
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with: 
+          tag_name: ${{ inputs.version || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            dist/handler-linux-x64-static
+            dist/misp2sentinel-cli-linux-x64-static
+            dist/misp2sentinel-cli-linux-x64
+            dist/misp2sentinel-cli-windows-x64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

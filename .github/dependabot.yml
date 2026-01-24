@@ -1,0 +1,18 @@
+version: 2
+updates:
+  # Cargo (Rust package manager)
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    # Optional: customize update behavior
+    open-pull-requests-limit: 10
+    rebase-strategy: "auto"
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    # Optional: allow/ignore specific versions
+    allow:
+      - dependency-type: "all"

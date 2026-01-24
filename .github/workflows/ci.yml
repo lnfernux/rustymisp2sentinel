@@ -1,0 +1,131 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  checks: write
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  fmt:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --all --verbose
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --all
+
+  build-musl:
+    name: Build Linux Binaries
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-musl,x86_64-unknown-linux-gnu
+      - name: Install musl-tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      - uses: Swatinem/rust-cache@v2
+      - name: Build static binaries (musl)
+        run: |
+          set -e
+          cargo build --release --target x86_64-unknown-linux-musl -p misp2sentinel-cli --features vendored-openssl
+      - name: Build dynamic binaries (gnu)
+        run: |
+          set -e
+          cargo build --release --target x86_64-unknown-linux-gnu -p misp2sentinel-cli
+      - name: Package artifacts
+        run: |
+          set -e
+          mkdir -p dist
+          # CLI binaries
+          cp target/x86_64-unknown-linux-musl/release/misp2sentinel dist/misp2sentinel-cli-linux-x64-static
+          cp target/x86_64-unknown-linux-gnu/release/misp2sentinel dist/misp2sentinel-cli-linux-x64
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-binaries-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+
+  build-windows:
+    name: Build Windows CLI
+    runs-on: windows-latest
+    if: github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+      - name: Build CLI
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          cargo build --release --target x86_64-pc-windows-msvc -p misp2sentinel-cli
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Package artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item target/x86_64-pc-windows-msvc/release/misp2sentinel.exe dist/misp2sentinel-cli-windows-x64.exe
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-binaries-windows-${{ github.sha }}
+          path: dist/
+          retention-days: 30
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Generate Cargo.lock
+        run: cargo generate-lockfile
+      - uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}

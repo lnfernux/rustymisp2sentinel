@@ -1,0 +1,124 @@
+# MISP2Sentinel Configuration
+# Copy this file to config.toml and fill in your values
+#
+# Defaults are matched to the Python misp2sentinel project for compatibility
+
+[misp]
+# MISP instance URL
+url = "https://misp.example.com"
+# MISP API key (or use Key Vault)
+api_key = ""
+# SSL verification (set to false for self-signed certs)
+verify_tls = true
+# Events per page for pagination (default: 100)
+page_limit = 100
+# Maximum events to fetch (optional, default: unlimited)
+# max_events = 1000
+
+[misp.filters]
+# Only fetch published events (default: true)
+published = true
+# Only attributes flagged for IDS (default: true)
+to_ids = true
+# Publish timestamp filter - events published AFTER this time (default: "14d")
+# Formats: "14d", "30d", "90d", "2024-01-01", Unix timestamp
+publish_timestamp = "14d"
+# Event modification timestamp filter (default: none)
+# Unlike publish_timestamp, this filters by last modification time
+# timestamp = "7d"
+# Enforce warninglist on MISP side (default: false)
+enforce_warninglist = false
+# Include event tags in API response (default: true)
+include_event_tags = true
+# Tags to filter by (INCLUDE, OR logic)
+# tags = ["workflow:state=\"complete\"", "tlp:white"]
+# Tags to exclude (NOT logic)
+# not_tags = ["tlp:red", "false-positive"]
+# Organizations to include
+# orgs = ["CIRCL", "CERT-EU"]
+# Organizations to exclude
+# not_orgs = ["TestOrg"]
+# Date range filters (YYYY-MM-DD)
+# from = "2024-01-01"
+# to = "2024-12-31"
+# Last N time period (alternative to publish_timestamp)
+# last = "7d"
+# Event info text search
+# event_info = "ransomware"
+# Threat level filter (1=High, 2=Medium, 3=Low, 4=Undefined)
+# threat_level_id = [1, 2]
+
+[sentinel]
+# Azure AD tenant ID
+tenant_id = ""
+# App registration client ID
+client_id = ""
+# Client secret (or use Key Vault / managed identity)
+client_secret = ""
+# Log Analytics workspace ID for Sentinel
+workspace_id = ""
+# Source system name (default: "MISP")
+source_system = "MISP"
+# API version (default: "2022-07-01" - matches Python)
+api_version = "2022-07-01"
+
+[sync]
+# Days until indicators expire (default: 50, matches Python)
+days_to_expire = 50
+# Start counting expiration from "current_date" or "valid_from" (default: "current_date")
+days_to_expire_start = "current_date"
+# Default confidence level 0-100 (default: 50)
+default_confidence = 50
+# Batch size for uploads - max 100 (API limit)
+batch_size = 100
+# Requests per minute to Sentinel API - max 100 (rate limit)
+requests_per_minute = 100
+# Dry run mode - parse but don't upload
+dry_run = false
+# Enable verbose logging
+verbose = false
+# Flatten MISP object attributes to atomic attributes (default: true)
+# Helps when attributes are not "mapped" in misp-stix converter
+flatten_attributes = true
+# Ignore local (org-specific) tags (default: true)
+ignore_local_tags = true
+# Write parsed indicators to file for debugging (default: false)
+write_parsed_indicators = false
+# Write event IDs to file for debugging (default: false)
+write_parsed_event_ids = false
+
+# === Performance Tuning ===
+# These settings optimize throughput for large datasets
+
+# Number of concurrent MISP page fetches (default: 4)
+# Increase for faster event retrieval, but be mindful of MISP server load
+concurrent_page_fetches = 4
+
+# Number of concurrent Sentinel upload batches (default: 4)
+# Limited by rate limiting; higher values help when rate limit allows
+concurrent_uploads = 4
+
+# Enable parallel conversion of events to STIX (default: true)
+# Uses all CPU cores via Rayon for maximum conversion speed
+# Can process 1M+ indicators/second on modern hardware
+parallel_conversion = true
+
+# Per-type expiration overrides (days)
+# Matches Python days_to_expire_mapping
+# [sync.type_expiration]
+# "ipv4-addr" = 180
+# "ipv6-addr" = 180
+# "domain-name" = 180
+# "url" = 365
+
+# Indicator types to include (empty = all supported)
+# include_types = ["ipv4-addr", "domain-name", "url"]
+
+# Indicator types to exclude
+# exclude_types = ["file"]
+
+# Optional: Key Vault integration for secrets
+# [keyvault]
+# vault_url = "https://your-keyvault.vault.azure.net"
+# misp_api_key_secret = "misp-api-key"
+# sentinel_client_secret = "sentinel-client-secret"
