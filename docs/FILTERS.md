@@ -6,7 +6,7 @@ This guide explains how to configure MISP event filters to control which threat 
 
 Filters can be configured via:
 1. **TOML config file** (`config.toml`) - Recommended for local development
-2. **Environment variables** - Recommended for Azure deployments
+2. **Environment variables**
 
 Filters are applied server-side during the MISP API request, ensuring efficient data transfer.
 
@@ -32,7 +32,7 @@ not_tags = ["tlp:red", "false-positive"]
 threat_level_id = [1, 2]
 ```
 
-### Method 2: Environment Variables (Azure Function)
+### Method 2: Environment Variables 
 
 ```bash
 MISP_FILTER_PUBLISHED=true
@@ -41,26 +41,6 @@ MISP_FILTER_PUBLISH_TIMESTAMP=14d
 MISP_FILTER_TAGS=tlp:white,type:malware
 MISP_FILTER_NOT_TAGS=tlp:red,false-positive
 MISP_FILTER_THREAT_LEVEL=1,2
-```
-
-### Method 3: Azure Portal (GUI)
-
-1. Navigate to your Function App in Azure Portal
-2. Go to **Settings** → **Environment variables**
-3. Click **+ Add** for each application setting
-4. Add your filter variables (see table below)
-5. Click **Apply** then **Confirm**
-
-### Method 4: Azure CLI
-
-```bash
-az functionapp config appsettings set \
-    --name <function-app-name> \
-    --resource-group <resource-group> \
-    --settings \
-        "MISP_FILTER_TAGS=tlp:white,type:malware" \
-        "MISP_FILTER_NOT_TAGS=tlp:red,false-positive" \
-        "MISP_FILTER_PUBLISH_TIMESTAMP=7d"
 ```
 
 ## Available Filters
@@ -110,7 +90,7 @@ az functionapp config appsettings set \
 
 ## Common Filter Scenarios
 
-### Scenario 1: High-Confidence Indicators Only
+### Scenario 1: TLP:White and threat level high/medium indicators Only
 
 Get TLP:WHITE, high/medium threat level indicators from the last 7 days:
 
@@ -187,35 +167,6 @@ Test filters locally without uploading:
 cargo run --release -- --dry-run
 ```
 
-### Azure Function HTTP Trigger
-
-Trigger a manual sync via HTTP:
-
-```bash
-# Get function key
-FUNC_KEY=$(az functionapp keys list \
-    --name <function-app-name> \
-    --resource-group <resource-group> \
-    --query "functionKeys.default" -o tsv)
-
-# Trigger sync
-curl -X POST "https://<function-app-name>.azurewebsites.net/api/misp2sentinelhttp?code=$FUNC_KEY"
-```
-
-Expected response:
-```json
-{
-  "status": "success",
-  "message": "Processed 42 events, created 1337 indicators. Upload: 1337 successful, 0 failed",
-  "details": {
-    "events_processed": 42,
-    "indicators_created": 1337,
-    "successful": 1337,
-    "failed": 0
-  }
-}
-```
-
 ## Filter Logic
 
 - **Tag filters** use OR logic: Event must have at least one tag from `tags`
@@ -259,14 +210,6 @@ If processing takes too long:
 3. **Organization filters**: Limit to trusted sources
 4. **Use max_events**: Set `max_events = 1000` to cap the number
 
-### Filter Not Applied
-
-If changes don't take effect:
-
-1. **Azure Function**: Restart after changing environment variables
-2. **CLI**: Ensure you're editing the correct `config.toml`
-3. **Env override**: Environment variables override TOML values
-4. **Spelling**: Variable names are case-sensitive
 
 ## Complete Reference
 
@@ -323,6 +266,4 @@ threat_level_id = [1, 2]            # 1=High, 2=Med, 3=Low, 4=Undef
 ## Related Documentation
 
 - [Local Setup Guide](./SETUP_LOCAL.md) - CLI configuration
-- [Azure Setup Guide](./SETUP_AZURE.md) - Azure Function configuration
-- [Deployment Guide](../deploy/README.md) - Bicep deployment with filters
 - [MISP restSearch API](https://www.misp-project.org/openapi/#tag/Events/operation/restSearchEvents) - Full API reference
