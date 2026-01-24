@@ -11,22 +11,34 @@ High-performance Rust implementation for syncing threat intelligence from MISP t
 
 ## Prerequisites
 
-This project supports the [STIX Objects version of the Microsoft Sentinel Upload Indicators API](https://learn.microsoft.com/en-us/azure/sentinel/stix-objects-api/?wt.mc_id=SEC-MVP-5005030) and requires the following to be setup:
+This project supports the [STIX Objects version of the Microsoft Sentinel Upload Indicators API](https://learn.microsoft.com/en-us/azure/sentinel/stix-objects-api/?wt.mc_id=SEC-MVP-5005030) and requires the following to be setup
 
-1. **Application registration in Entra ID with Microsoft Sentinel Contributor on the resource group where Microsoft Sentinel is deployed**
-    * You should have the following values from this step:
-        * **client_id** - the application id of the application registration
-        * **client_secret** - the secret (value) of the application registration, must be created
-        * **tenant_id** - the azure tenant id
-        * **workspace_id** - the id of sentinels underlying log analytics workspace
-2. **MISP server configured**
-    * You should have the following values from this step:
-        * **MISP URI** - the url of the MISP server
-        * **api key** - misp auth key
+### Entra ID app registration
+
+Application registration in Entra ID with Microsoft Sentinel Contributor on the resource group where Microsoft Sentinel is deployed.
+
+* You should have the following values from this step:
+    * **client_id** - the application id of the application registration
+    * **client_secret** - the secret (value) of the application registration, must be created
+    * **tenant_id** - the azure tenant id
+    * **workspace_id** - the id of sentinels underlying log analytics workspace
 
 *For more guidance the Entra ID aspects:*
 - **[Setting up app registrations](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-register-app/?wt.mc_id=SEC-MVP-5005030)**
 - **[Add credentials to an app registration](https://learn.microsoft.com/en-us/entra/identity-platform/how-to-add-credentials?tabs=client-secret/?wt.mc_id=SEC-MVP-5005030)**
+
+### MISP server configured
+
+This one is probably pretty obvious, but we need a MISP-server with a valid URI and auth key.
+
+* You should have the following values from this step:
+    * **MISP URI** - the url of the MISP server
+    * **api key** - misp auth key
+
+*For more guidance on MISP, check out:*
+- **[MISP Documentation](https://www.misp-project.org/documentation/)**
+- **[MISP Github](https://github.com/MISP/MISP)**
+- **[MISP Install script for Ubuntu 24.04](https://github.com/MISP/MISP/blob/2.5/INSTALL/INSTALL.ubuntu2404.sh)**
 
 ## Quick Start
 
