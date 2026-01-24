@@ -65,6 +65,47 @@ cp config.toml.example config.toml
 MISP_API_KEY=$(vault read -field=key secret/misp) ./misp2sentinel-cli --config config.toml
 ```
 
+### Example run
+
+Running locally on my Windows desktop against remote MISP-server, the `config.toml` file is placed in the same folder:
+
+```bash
+[misp]
+url = "https://misp.example"
+api_key = "if your eyes arent real"
+verify_tls = false
+
+
+[misp.filters]
+publish_timestamp = "1d"
+published = true
+to_ids = true
+
+
+[sentinel]
+workspace_id = "what"
+tenant_id = "do"
+client_id = "tigers"
+client_secret = "dream of?"
+
+[sync]
+dry_run = false
+batch_size = 100
+requests_per_minute = 100
+write_parsed_indicators = true
+write_parsed_event_ids = true
+```
+
+Run `.exe` in `pwsh`:
+
+```bash
+.\misp2sentinel-cli-windows-x64.exe
+```
+
+Output as follows:
+
+![](/example_run.png)
+
 ## Documentation
 
 - **[Filter Configuration Guide](docs/FILTERS.md)** - How to configure MISP event filters
