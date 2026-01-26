@@ -2,13 +2,6 @@
 
 High-performance Rust implementation for syncing threat intelligence from MISP to Microsoft Sentinel.
 
-> [!CAUTION]
-> **Disclaimer**
->
-> **This tool is created mainly by using AI.** Please exercise caution when using this solution and always understand what are you running before you run it in production. This tool was created as an experiment to learn more about Rust - the developer assumes no liability for any vulnerabilities or issues.
-> 
-> By downloading, installing, or using this tool, you acknowledge that you have read, understood, and agree to these terms.
-
 ## Prerequisites
 
 This project supports the [STIX Objects version of the Microsoft Sentinel Upload Indicators API](https://learn.microsoft.com/en-us/azure/sentinel/stix-objects-api/?wt.mc_id=SEC-MVP-5005030) and requires the following to be setup
@@ -204,3 +197,13 @@ Both implementations produce valid STIX indicators that Sentinel accepts (100% u
 ## License
 
 MIT
+
+## Disclaimer
+
+> [!CAUTION]
+> **Disclaimer**
+>
+> **This tool is created mainly by using AI.** Please exercise caution when using this solution and always understand what are you running before you run it in production. This tool was created as an experiment to learn more about Rust - the developer assumes no liability for any vulnerabilities or issues.
+> 
+> By downloading, installing, or using this tool, you acknowledge that you have read, understood, and agree to these terms.
+>
