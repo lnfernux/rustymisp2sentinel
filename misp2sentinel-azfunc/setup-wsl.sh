@@ -18,18 +18,25 @@ echo ""
 echo "==> Installing Azure Functions Core Tools v4..."
 sudo "$NPM" install -g azure-functions-core-tools@4 --unsafe-perm true
 
-FUNC=$(command -v func 2>/dev/null || echo /usr/local/bin/func)
-echo ""
-echo "==> func installed: $($FUNC --version)"
-
 echo ""
 echo "==> Installing Azurite..."
 sudo "$NPM" install -g azurite
 
 echo ""
-echo "==> Done! Next steps:"
-echo "    1. cp local.settings.json.example local.settings.json"
-echo "    2. Edit local.settings.json with your credentials"
-echo "    3. Terminal 1:  azurite --silent"
-echo "    4. Terminal 2:  func start"
-echo "    5. Trigger:     curl -X POST http://localhost:7071/admin/functions/sync-timer -H 'Content-Type: application/json' -d '{}'"
+echo "==> Ensuring /usr/local/bin is first in PATH..."
+if ! grep -q 'export PATH="/usr/local/bin' ~/.bashrc; then
+    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc
+    echo "    Added to ~/.bashrc"
+fi
+
+FUNC=/usr/local/bin/func
+echo ""
+echo "==> func version: $($FUNC --version)"
+echo ""
+echo "==> Done! To start, run these commands:"
+echo ""
+echo "    source ~/.bashrc"
+echo "    $FUNC start"
+echo ""
+echo "    (In a separate terminal to trigger the function manually:)"
+echo "    curl -X POST http://localhost:7071/admin/functions/sync-timer -H 'Content-Type: application/json' -d '{}'"
