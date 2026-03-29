@@ -1,0 +1,336 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "11173801548107962935"
+    }
+  },
+  "parameters": {
+    "functionAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Function App. Must be globally unique."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Location for all resources. Defaults to the resource group location."
+      }
+    },
+    "mispUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "MISP server URL (e.g. https://misp.example.com)."
+      }
+    },
+    "mispApiKey": {
+      "type": "securestring",
+      "metadata": {
+        "description": "MISP API key. Stored in Key Vault."
+      }
+    },
+    "mispVerifyTls": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether to verify TLS certificates when connecting to MISP."
+      }
+    },
+    "mispPublishTimestamp": {
+      "type": "string",
+      "defaultValue": "14d",
+      "metadata": {
+        "description": "MISP publish_timestamp filter window (e.g. 14d, 7d, 1d)."
+      }
+    },
+    "tenantId": {
+      "type": "string",
+      "defaultValue": "[subscription().tenantId]",
+      "metadata": {
+        "description": "Azure AD Tenant ID used to authenticate against Sentinel."
+      }
+    },
+    "clientId": {
+      "type": "string",
+      "metadata": {
+        "description": "Azure AD Client ID (app registration) with Sentinel Contributor role."
+      }
+    },
+    "clientSecret": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Azure AD Client Secret for the app registration. Stored in Key Vault."
+      }
+    },
+    "sentinelWorkspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Microsoft Sentinel Workspace ID."
+      }
+    },
+    "daysToExpire": {
+      "type": "int",
+      "defaultValue": 90,
+      "metadata": {
+        "description": "Number of days until uploaded indicators expire in Sentinel."
+      }
+    },
+    "defaultConfidence": {
+      "type": "int",
+      "defaultValue": 50,
+      "metadata": {
+        "description": "Default confidence score for indicators (0-100)."
+      }
+    },
+    "syncSchedule": {
+      "type": "string",
+      "defaultValue": "0 0 * * * *",
+      "metadata": {
+        "description": "Sync schedule as a 6-part NCRONTAB expression."
+      }
+    },
+    "dryRun": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Run in dry-run mode — fetches and converts indicators but does not upload to Sentinel."
+      }
+    }
+  },
+  "variables": {
+    "uniqueSuffix": "[uniqueString(resourceGroup().id)]",
+    "storageAccountName": "[format('stmisp{0}', take(variables('uniqueSuffix'), 11))]",
+    "keyVaultName": "[format('kv-misp-{0}', take(variables('uniqueSuffix'), 10))]",
+    "appServicePlanName": "[format('{0}-plan', parameters('functionAppName'))]",
+    "logAnalyticsName": "[format('{0}-logs', parameters('functionAppName'))]",
+    "appInsightsName": "[format('{0}-ai', parameters('functionAppName'))]",
+    "keyVaultSecretsUserRole": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2023-05-01",
+      "name": "[variables('storageAccountName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "minimumTlsVersion": "TLS1_2",
+        "allowBlobPublicAccess": false
+      }
+    },
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "apiVersion": "2023-09-01",
+      "name": "[variables('logAnalyticsName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "name": "PerGB2018"
+        },
+        "retentionInDays": 30
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[variables('appInsightsName')]",
+      "location": "[parameters('location')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('logAnalyticsName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2023-12-01",
+      "name": "[variables('appServicePlanName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Y1",
+        "tier": "Dynamic"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "sku": {
+          "family": "A",
+          "name": "standard"
+        },
+        "tenantId": "[subscription().tenantId]",
+        "enableRbacAuthorization": true,
+        "softDeleteRetentionInDays": 7,
+        "enabledForTemplateDeployment": false
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'misp-api-key')]",
+      "properties": {
+        "value": "[parameters('mispApiKey')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2023-07-01",
+      "name": "[format('{0}/{1}', variables('keyVaultName'), 'sentinel-client-secret')]",
+      "properties": {
+        "value": "[parameters('clientSecret')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2023-12-01",
+      "name": "[parameters('functionAppName')]",
+      "location": "[parameters('location')]",
+      "kind": "functionapp,linux",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "reserved": true,
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "AzureWebJobsStorage",
+              "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};EndpointSuffix={1};AccountKey={2}', variables('storageAccountName'), environment().suffixes.storage, listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-05-01').keys[0].value)]"
+            },
+            {
+              "name": "FUNCTIONS_EXTENSION_VERSION",
+              "value": "~4"
+            },
+            {
+              "name": "FUNCTIONS_WORKER_RUNTIME",
+              "value": "custom"
+            },
+            {
+              "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2020-02-02').ConnectionString]"
+            },
+            {
+              "name": "SYNC_SCHEDULE",
+              "value": "[parameters('syncSchedule')]"
+            },
+            {
+              "name": "MISP_URL",
+              "value": "[parameters('mispUrl')]"
+            },
+            {
+              "name": "MISP_VERIFY_TLS",
+              "value": "[string(parameters('mispVerifyTls'))]"
+            },
+            {
+              "name": "MISP_FILTER_PUBLISHED",
+              "value": "true"
+            },
+            {
+              "name": "MISP_FILTER_PUBLISH_TIMESTAMP",
+              "value": "[parameters('mispPublishTimestamp')]"
+            },
+            {
+              "name": "MISP_API_KEY",
+              "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=misp-api-key)', variables('keyVaultName'))]"
+            },
+            {
+              "name": "AZURE_TENANT_ID",
+              "value": "[parameters('tenantId')]"
+            },
+            {
+              "name": "AZURE_CLIENT_ID",
+              "value": "[parameters('clientId')]"
+            },
+            {
+              "name": "AZURE_CLIENT_SECRET",
+              "value": "[format('@Microsoft.KeyVault(VaultName={0};SecretName=sentinel-client-secret)', variables('keyVaultName'))]"
+            },
+            {
+              "name": "SENTINEL_WORKSPACE_ID",
+              "value": "[parameters('sentinelWorkspaceId')]"
+            },
+            {
+              "name": "SENTINEL_SOURCE_SYSTEM",
+              "value": "MISP"
+            },
+            {
+              "name": "SYNC_DAYS_TO_EXPIRE",
+              "value": "[string(parameters('daysToExpire'))]"
+            },
+            {
+              "name": "SYNC_DEFAULT_CONFIDENCE",
+              "value": "[string(parameters('defaultConfidence'))]"
+            },
+            {
+              "name": "SYNC_DRY_RUN",
+              "value": "[string(parameters('dryRun'))]"
+            }
+          ],
+          "linuxFxVersion": ""
+        },
+        "httpsOnly": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Insights/components', variables('appInsightsName'))]",
+        "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'sentinel-client-secret')]",
+        "[resourceId('Microsoft.KeyVault/vaults/secrets', variables('keyVaultName'), 'misp-api-key')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyVaultName'))]",
+      "name": "[guid(resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName')), resourceId('Microsoft.Web/sites', parameters('functionAppName')), variables('keyVaultSecretsUserRole'))]",
+      "properties": {
+        "roleDefinitionId": "[variables('keyVaultSecretsUserRole')]",
+        "principalId": "[reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-12-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', parameters('functionAppName'))]",
+        "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "functionAppName": {
+      "type": "string",
+      "value": "[parameters('functionAppName')]"
+    },
+    "functionAppUrl": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.Web/sites', parameters('functionAppName')), '2023-12-01').defaultHostName)]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[variables('keyVaultName')]"
+    }
+  }
+}
