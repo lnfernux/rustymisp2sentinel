@@ -1,0 +1,14 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "custom",
+    "MISP_URL": "https://your-misp.example.com",
+    "MISP_API_KEY": "your-misp-api-key",
+    "AZURE_TENANT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "AZURE_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "AZURE_CLIENT_SECRET": "your-client-secret",
+    "SENTINEL_WORKSPACE_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "SYNC_DRY_RUN": "true"
+  }
+}

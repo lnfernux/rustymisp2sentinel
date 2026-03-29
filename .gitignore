@@ -3,3 +3,4 @@ Cargo.lock
 .venv/
 config.toml
 .vscode/
+local.settings.json
