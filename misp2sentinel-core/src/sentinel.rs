@@ -334,8 +334,27 @@ impl SentinelClient {
                         *last_time = Instant::now();
                     }
 
-                    // Upload the batch
-                    let result = upload_batch_standalone(&client, &config, &token, batch).await;
+                    // Upload with retry on rate limit
+                    let max_retries = 5u32;
+                    let mut retries = 0u32;
+                    let result = loop {
+                        let result =
+                            upload_batch_standalone(&client, &config, &token, batch.clone()).await;
+                        match result {
+                            Err(Error::RateLimit(retry_after)) if retries < max_retries => {
+                                warn!(
+                                    "Batch {}: rate limit hit, waiting {} seconds (attempt {}/{})",
+                                    batch_num + 1,
+                                    retry_after,
+                                    retries + 1,
+                                    max_retries
+                                );
+                                sleep(Duration::from_secs(retry_after + 1)).await;
+                                retries += 1;
+                            }
+                            other => break other,
+                        }
+                    };
 
                     // Update stats
                     let mut stats_guard = stats.lock().await;
@@ -483,8 +502,27 @@ impl SentinelClient {
 
                     let batch_start = Instant::now();
 
-                    // Upload the batch
-                    let result = upload_batch_standalone(&client, &config, &token, batch).await;
+                    // Upload with retry on rate limit
+                    let max_retries = 5u32;
+                    let mut retries = 0u32;
+                    let result = loop {
+                        let result =
+                            upload_batch_standalone(&client, &config, &token, batch.clone()).await;
+                        match result {
+                            Err(Error::RateLimit(retry_after)) if retries < max_retries => {
+                                warn!(
+                                    "Batch {}: rate limit hit, waiting {} seconds (attempt {}/{})",
+                                    batch_num + 1,
+                                    retry_after,
+                                    retries + 1,
+                                    max_retries
+                                );
+                                sleep(Duration::from_secs(retry_after + 1)).await;
+                                retries += 1;
+                            }
+                            other => break other,
+                        }
+                    };
 
                     let batch_duration = batch_start.elapsed();
 

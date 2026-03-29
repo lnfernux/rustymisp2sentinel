@@ -3,12 +3,19 @@
   "Values": {
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "FUNCTIONS_WORKER_RUNTIME": "custom",
+    "SYNC_SCHEDULE": "0 0 * * * *",
     "MISP_URL": "https://your-misp.example.com",
     "MISP_API_KEY": "your-misp-api-key",
+    "MISP_VERIFY_TLS": "true",
+    "MISP_FILTER_PUBLISHED": "true",
+    "MISP_FILTER_PUBLISH_TIMESTAMP": "14d",
     "AZURE_TENANT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     "AZURE_CLIENT_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
     "AZURE_CLIENT_SECRET": "your-client-secret",
     "SENTINEL_WORKSPACE_ID": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+    "SENTINEL_SOURCE_SYSTEM": "MISP",
+    "SYNC_DAYS_TO_EXPIRE": "90",
+    "SYNC_DEFAULT_CONFIDENCE": "50",
     "SYNC_DRY_RUN": "true"
   }
 }
