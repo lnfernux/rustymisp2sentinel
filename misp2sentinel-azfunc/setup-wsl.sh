@@ -13,27 +13,18 @@ set -e
 # Use WSL-native tools, not Windows ones from /mnt/c
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-echo "==> Cleaning up any leftover apt source files from previous runs..."
-sudo find /etc/apt/sources.list.d/ -name "azure-cli*" -delete 2>/dev/null || true
+NPM=$(which npm)
+echo "==> Using npm at: $NPM ($(npm --version))"
+echo ""
 
-echo "==> Adding Microsoft apt repository..."
-curl -s https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft.gpg
-sudo install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/microsoft.gpg
-
-CODENAME=$(. /etc/os-release && printf '%s' "$VERSION_CODENAME")
-echo "    Detected Ubuntu codename: $CODENAME"
-printf 'deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ %s main\n' "$CODENAME" \
-    | sudo tee /etc/apt/sources.list.d/azure-cli.list > /dev/null
-
-echo "==> Installing Azure Functions Core Tools v4..."
-sudo apt-get update -q
-sudo apt-get install -y azure-functions-core-tools-4
+echo "==> Installing Azure Functions Core Tools v4 via npm..."
+sudo "$NPM" install -g azure-functions-core-tools@4 --unsafe-perm true
 
 echo ""
-echo "==> func installed: $(/usr/bin/func --version)"
+echo "==> func installed: $(/usr/local/bin/func --version)"
 echo ""
 echo "==> Installing Azurite (local storage emulator)..."
-sudo /usr/bin/npm install -g azurite
+sudo "$NPM" install -g azurite
 
 echo ""
 echo "==> Done! Next steps:"
