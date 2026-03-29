@@ -1,0 +1,23 @@
+[package]
+name = "misp2sentinel-lambda"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "AWS Lambda handler for MISP to Microsoft Sentinel threat intelligence sync"
+
+# Lambda custom runtime binary must be named "bootstrap"
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"
+
+[dependencies]
+misp2sentinel-core = { path = "../misp2sentinel-core" }
+lambda_runtime.workspace = true
+tokio.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true

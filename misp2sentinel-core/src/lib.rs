@@ -14,7 +14,8 @@ pub mod sync;
 pub use config::{Config, KeyVaultConfig};
 pub use error::Error;
 pub use progress::ProgressTracker;
-pub use sync::Syncer;
+pub use sentinel::UploadStats;
+pub use sync::{SyncResult, Syncer};
 
 // Re-export commonly used types for convenience
 pub use misp::{MispAttribute, MispClient, MispEvent};

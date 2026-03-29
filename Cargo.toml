@@ -3,6 +3,8 @@ resolver = "2"
 members = [
     "misp2sentinel-core",
     "misp2sentinel-cli",
+    "misp2sentinel-lambda",
+    "misp2sentinel-azfunc",
 ]
 
 [workspace.package]
@@ -59,3 +61,7 @@ tokio-stream = "0.1"
 # Progress bars and terminal UI
 indicatif = { version = "0.18", features = ["rayon"] }
 console = "0.16"
+
+# Serverless runtimes
+lambda_runtime = "0.13"
+axum = "0.8"

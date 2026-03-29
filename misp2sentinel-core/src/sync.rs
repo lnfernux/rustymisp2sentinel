@@ -10,6 +10,7 @@
 
 use chrono::{Duration, Utc};
 use rayon::prelude::*;
+use serde::Serialize;
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
@@ -677,7 +678,7 @@ impl Syncer {
 }
 
 /// Result of a synchronization run
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SyncResult {
     pub events_processed: usize,
     pub indicators_created: usize,

@@ -73,7 +73,7 @@ pub struct UploadError {
 }
 
 /// Statistics for upload operation
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize)]
 pub struct UploadStats {
     pub total_indicators: usize,
     pub successful: usize,

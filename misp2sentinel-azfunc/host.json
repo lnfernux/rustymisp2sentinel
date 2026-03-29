@@ -1,0 +1,20 @@
+{
+    "version": "2.0",
+    "customHandler": {
+        "description": {
+            "defaultExecutablePath": "handler",
+            "workingDirectory": "",
+            "arguments": []
+        },
+        "enableForwardingHttpRequest": false
+    },
+    "extensionBundle": {
+        "id": "Microsoft.Azure.Functions.ExtensionBundle",
+        "version": "[4.*, 5.0.0)"
+    },
+    "logging": {
+        "logLevel": {
+            "default": "Information"
+        }
+    }
+}

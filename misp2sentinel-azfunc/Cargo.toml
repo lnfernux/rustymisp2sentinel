@@ -1,0 +1,23 @@
+[package]
+name = "misp2sentinel-azfunc"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Azure Functions Custom Handler for MISP to Microsoft Sentinel threat intelligence sync"
+
+# Azure Functions custom handler binary name must match defaultExecutablePath in host.json
+[[bin]]
+name = "handler"
+path = "src/main.rs"
+
+[dependencies]
+misp2sentinel-core = { path = "../misp2sentinel-core" }
+axum.workspace = true
+tokio.workspace = true
+serde = { workspace = true }
+serde_json.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+anyhow.workspace = true
