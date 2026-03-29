@@ -4,22 +4,25 @@
 
 set -e
 
+# Use WSL-native tools, not Windows ones from /mnt/c
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 echo "==> Installing Azure Functions Core Tools v4 (Linux native)..."
 
 curl -s https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft.gpg
 sudo install -o root -g root -m 644 /tmp/microsoft.gpg /etc/apt/trusted.gpg.d/
 
 . /etc/os-release
-sudo sh -c "echo 'deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ $VERSION_CODENAME main' > /etc/apt/sources.list.d/azure-cli.list"
+sudo sh -c "echo 'deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ ${VERSION_CODENAME} main' > /etc/apt/sources.list.d/azure-cli.list"
 
 sudo apt-get update -q
 sudo apt-get install -y azure-functions-core-tools-4
 
 echo ""
-echo "==> Installed: $(func --version)"
+echo "==> func installed: $(func --version)"
 echo ""
 echo "==> Installing Azurite (local storage emulator)..."
-npm install -g azurite
+sudo npm install -g azurite
 
 echo ""
 echo "==> Done! Next steps:"
