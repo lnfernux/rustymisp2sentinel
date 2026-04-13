@@ -43,7 +43,7 @@ anyhow = "1.0"
 # Azure SDK
 azure_identity = "0.30"
 azure_security_keyvault_secrets = "0.9"
-azure_core = "0.31"
+azure_core = "0.34"
 
 # UUID generation
 uuid = { version = "1.11", features = ["v4", "v5", "serde"] }
