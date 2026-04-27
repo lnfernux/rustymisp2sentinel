@@ -41,7 +41,7 @@ thiserror = "2.0"
 anyhow = "1.0"
 
 # Azure SDK
-azure_identity = "0.30"
+azure_identity = "0.35"
 azure_security_keyvault_secrets = "0.9"
 azure_core = "0.31"
 
